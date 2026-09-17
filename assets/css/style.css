@@ -21,3 +21,21 @@
 .protocol-list{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .protocol-box{border:1px solid #e4e8ef;border-radius:9px;padding:10px;background:#fff}
 @media(max-width:700px){.triggers,.channels,.summary-grid,.input-row,.protocol-list{grid-template-columns:1fr}.layout{grid-template-columns:1fr}}
+
+.input-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.field{margin:8px 0}
+.field label{display:block;margin-bottom:5px;font-size:11px}
+.field input,.field select,.field textarea{width:100%;border:1px solid #d8deea;border-radius:8px;padding:10px;background:#fff}
+.triggers{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.check{border:1px solid #e0e5ef;border-radius:9px;padding:11px;background:#fff;display:block}
+.check.on{border-color:#8794e8;background:#f4f5ff}
+.check input{width:auto;margin-right:5px}
+.check small{display:block;color:#7b879a;font-size:9px;margin:5px 0 0 20px}
+.channels{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.channel{border:1px solid #e0e5ef;border-radius:9px;padding:11px;background:#fff}
+.channel.on{border-color:#8794e8;background:#f4f5ff}
+.email-preview{border:1px solid #e1e5ed;border-radius:10px;overflow:hidden;background:#fff}
+.mail-head{padding:13px;background:#f7f8fb}.mail-head span{display:block;font-size:9px;color:#667085;margin-top:5px}.mail-body{padding:16px;line-height:1.6;font-size:11px}
+.status-dot{width:7px;height:7px;border-radius:50%;display:inline-block;background:#20a56a}
+.modalbg{overflow:auto}
+@media(max-width:800px){.triggers{grid-template-columns:1fr 1fr}.input-row{grid-template-columns:1fr}.channels{grid-template-columns:1fr}}
