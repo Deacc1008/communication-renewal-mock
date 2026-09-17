@@ -17,3 +17,10 @@ A static GitHub Pages prototype for the KDK Licensing Communication & Renewal Ma
 - Safe dummy data only; no real APIs or credentials
 
 GitHub Pages can publish static HTML/CSS/JavaScript directly from a repository. Keep `index.html` at the root of the publishing source.
+
+
+### UI Refresh – Analytics/Product Dashboard
+- Product-grade analytics dashboard inspired by modern SaaS analytics layouts.
+- Added richer KPI cards, message activity chart, channel health, renewal trigger timeline, today's focus, recent campaign activity and audience snapshot.
+- Refreshed header navigation, search treatment, cards, spacing, typography, hover states and responsive behavior.
+- Existing campaign, template, scheduler, history and Subscription Master workflows remain connected to the same dummy data.

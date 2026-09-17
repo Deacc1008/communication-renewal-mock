@@ -76,25 +76,46 @@ function schedule(){
   `</table>`;
 }
 function Header(){
-  return `<header class="hdr"><div class="brand"><div class="logo">K</div><div><b>KDK Licensing</b><small>Communication & Renewal</small></div></div><nav class="nav">`+
-  [["dashboard","Dashboard"],["subscriptions","Subscription Master"],["templates","Templates"],["campaigns","Campaign Manager"],["scheduler","Schedule"],["history","History"]].map(x=>`<button class="${DB.view===x[0]?"on":""}" onclick="nav('${x[0]}')">${x[1]}</button>`).join("")+
-  `</nav><button class="btn" onclick="openSettings()">⚙</button><div class="avatar">DK</div></header>`;
+  const items=[['dashboard','⌂','Dashboard'],['subscriptions','▤','Subscriptions'],['templates','✦','Templates'],['campaigns','◈','Campaigns'],['scheduler','◷','Scheduler'],['history','↗','History']];
+  return `<header class="hdr"><div class="brand"><div class="logo">K</div><div class="brand-copy"><b>KDK</b><span>Communication Manager</span></div></div><nav class="nav">${items.map(x=>`<button class="${DB.view===x[0]?"on":""}" onclick="nav('${x[0]}')"><i>${x[1]}</i><span>${x[2]}</span></button>`).join("")}</nav><div class="hdr-tools"><div class="global-search"><span>⌕</span><input placeholder="Search campaigns, clients..." aria-label="Search"></div><button class="icon-btn" title="Notifications">♧<em></em></button><button class="avatar" title="User profile">DK</button></div></header>`;
 }
 function Dash(){
-  let active=DB.subs.filter(s=>s.status==="Active"&&!s.renewed).length;
-  let exp=DB.subs.filter(s=>s.status==="Active"&&!s.renewed&&days(DB.TODAY,s.end)>=0&&days(DB.TODAY,s.end)<=7).length;
-  let triggered=284+DB.msg.length;
-  let renewals=38+DB.subs.filter(s=>s.renewed).length;
-  return `<div class="crumb">KDK Licensing Application / Communication</div><div class="head"><div><h1>Communication Dashboard</h1><p>Renewal operations, campaign performance and execution readiness.</p></div><div class="inline-actions"><button class="btn" onclick="nav('subscriptions')">View Subscription Master</button><button class="btn primary" onclick="openCamp()">＋ Create Campaign</button></div></div>
-  <div class="grid kpis">
-  <div class="card kpi"><span class="ico">▣</span><span class="label muted">Active Plans</span><div class="value">${active}</div><span class="muted">Live Subscription Master data</span></div>
-  <div class="card kpi"><span class="ico">◷</span><span class="label muted">Expiring in 7 Days</span><div class="value">${exp}</div><span class="muted">Current eligible subscriptions</span></div>
-  <div class="card kpi"><span class="ico">↗</span><span class="label muted">Messages Triggered</span><div class="value">${triggered}</div><span class="muted"><b class="ok">96.4%</b> provider delivery rate</span></div>
-  <div class="card kpi"><span class="ico">✓</span><span class="label muted">Renewals Attributed</span><div class="value">${renewals}</div><span class="muted"><b class="ok">+12</b> this cycle</span></div></div>
-  <div class="grid two" style="margin-top:15px"><section class="card panel"><div class="title"><h3>Communication Performance</h3><span class="muted">WhatsApp + Email</span></div><div class="chart">${[64,71,58,82,76,93,88].map((v,i)=>`<div class="barcol"><div class="bars"><i class="bar" style="height:${v}%"></i><i class="bar email" style="height:${Math.max(8,v-18)}%"></i></div>${["Apr","May","Jun","Jul","Aug","Sep","Oct"][i]}</div>`).join("")}</div></section>
-  <section class="card panel"><div class="title"><h3>Renewal Funnel</h3><span class="muted">Current cycle</span></div>${[["Expiring audience",1284,100],["Delivered",1120,87],["Engaged",714,56],["Renewed",386,30]].map(x=>`<div class="funnel"><div class="frow"><b>${x[0]}</b><span>${x[1]}</span></div><div class="progress"><i style="width:${x[2]}%"></i></div></div>`).join("")}</section></div>
-  <div class="grid two" style="margin-top:15px"><section class="card panel"><div class="title"><h3>Upcoming Renewal Triggers</h3><button class="btn small" onclick="nav('scheduler')">View Scheduler</button></div>${schedule()}</section>
-  <section class="card panel"><div class="title"><h3>Campaign Activity</h3><button class="btn small" onclick="nav('campaigns')">Manage</button></div><table class="table"><tr><th>Campaign</th><th>Status</th><th>Triggers</th></tr>${DB.campaigns.map(c=>`<tr><td><b>${esc(c.name)}</b></td><td><span class="badge g">${c.status}</span></td><td>${campaignTriggers(c).map(triggerLabel).join(" · ")}</td></tr>`).join("")}</table></section></div>`;
+  const active=DB.subs.filter(s=>s.status==="Active"&&!s.renewed).length;
+  const exp=DB.subs.filter(s=>s.status==="Active"&&!s.renewed&&days(DB.TODAY,s.end)>=0&&days(DB.TODAY,s.end)<=7).length;
+  const triggered=284+DB.msg.length;
+  const renewals=38+DB.subs.filter(s=>s.renewed).length;
+  const wa=DB.subs.filter(s=>s.waOpt).length, em=DB.subs.filter(s=>s.emailOpt).length;
+  const todayRows=scheduleRows().filter(x=>x.d===DB.TODAY);
+  const todayEligible=todayRows.reduce((n,x)=>n+x.s.length,0);
+  const recent=historyRecords().slice(0,5);
+  const monthVals=[52,61,48,72,67,84,78,91], labels=['Feb','Mar','Apr','May','Jun','Jul','Aug','Sep'];
+  const max=Math.max(...monthVals), min=Math.min(...monthVals);
+  const pts=monthVals.map((v,i)=>`${30+i*54},${122-((v-min)/(max-min))*78}`).join(' ');
+  const area=`30,122 ${pts} 408,122`;
+  return `<div class="crumb">KDK Licensing Application <span>/</span> Communication Manager</div>
+  <div class="dash-hero"><div><div class="eyebrow">COMMUNICATION CONTROL CENTRE</div><h1>Good morning, Team <span>👋</span></h1><p>Monitor renewals, message performance and upcoming customer touchpoints from one place.</p></div><div class="dash-actions"><button class="btn soft" onclick="nav('subscriptions')">▤ Subscription Master</button><button class="btn primary" onclick="openCamp()">＋ Create Campaign</button></div></div>
+
+  <div class="dashboard-kpis">
+    <div class="dash-kpi accent-violet"><div class="kpi-top"><span>Active subscriptions</span><b>↗</b></div><strong>${active}</strong><small><span class="trend up">+8.4%</span> vs last cycle</small><div class="kpi-spark">${[35,45,31,55,48,68,60,78].map(v=>`<i style="height:${v}%"></i>`).join('')}</div></div>
+    <div class="dash-kpi accent-orange"><div class="kpi-top"><span>Expiring in 7 days</span><b>!</b></div><strong>${exp}</strong><small><span class="trend warn">Needs attention</span> current audience</small><div class="mini-pills"><i>${Math.max(0,Math.round(exp*.58))} WhatsApp</i><i>${Math.max(0,Math.round(exp*.42))} Email</i></div></div>
+    <div class="dash-kpi accent-pink"><div class="kpi-top"><span>Messages triggered</span><b>↗</b></div><strong>${triggered.toLocaleString()}</strong><small><span class="trend up">96.4%</span> provider delivery</small><div class="kpi-progress"><i style="width:96.4%"></i></div></div>
+    <div class="dash-kpi accent-blue"><div class="kpi-top"><span>Renewals attributed</span><b>✓</b></div><strong>${renewals}</strong><small><span class="trend up">+12</span> this cycle</small><div class="renew-ring"><span>${Math.round((renewals/Math.max(1,active+renewals))*100)}%</span></div></div>
+  </div>
+
+  <div class="dash-grid-main">
+    <section class="card analytics-card"><div class="dash-section-head"><div><h3>Message activity</h3><p>Triggered messages across WhatsApp and Email</p></div><div class="period"><button class="active">7D</button><button>30D</button><button>90D</button></div></div>
+      <div class="legend"><span><i class="dot violet"></i>WhatsApp</span><span><i class="dot pink"></i>Email</span><span class="legend-note">Live demo data</span></div>
+      <div class="line-chart"><div class="y-labels"><span>100</span><span>75</span><span>50</span><span>25</span><span>0</span></div><svg viewBox="0 0 438 150" preserveAspectRatio="none" aria-label="Message activity chart"><defs><linearGradient id="msgFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6c63ff" stop-opacity=".22"/><stop offset="1" stop-color="#6c63ff" stop-opacity="0"/></linearGradient></defs><polygon points="${area}" fill="url(#msgFill)"/><polyline points="${pts}" fill="none" stroke="#665cf4" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/><polyline points="30,112 84,102 138,108 192,94 246,98 300,88 354,96 408,82" fill="none" stroke="#ef6b9b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="5 4"/>${monthVals.map((v,i)=>`<circle cx="${30+i*54}" cy="${122-((v-min)/(max-min))*78}" r="3.5" fill="#fff" stroke="#665cf4" stroke-width="2"/>`).join('')}</svg></div><div class="x-labels">${labels.map(x=>`<span>${x}</span>`).join('')}</div>
+    </section>
+    <section class="card channel-card"><div class="dash-section-head"><div><h3>Channel health</h3><p>Current communication readiness</p></div><button class="more">•••</button></div><div class="channel-visual"><div class="donut"><div><strong>${Math.round((wa+em)/Math.max(1,DB.subs.length)*100)}%</strong><span>Opt-in</span></div></div><div class="channel-legend"><div><span><i class="channel-dot wa"></i>WhatsApp</span><b>${wa}</b></div><div><span><i class="channel-dot mail"></i>Email</span><b>${em}</b></div><div><span><i class="channel-dot muted-dot"></i>No opt-in</span><b>${Math.max(0,DB.subs.length-Math.max(wa,em))}</b></div></div></div><div class="health-footer"><span><i class="status-dot"></i> Providers connected</span><button onclick="nav('templates')">Manage templates →</button></div></section>
+  </div>
+
+  <div class="dash-grid-lower">
+    <section class="card panel upcoming-card"><div class="dash-section-head"><div><h3>Upcoming renewal triggers</h3><p>Calculated against each subscription's Plan End Date</p></div><button class="btn soft small" onclick="nav('scheduler')">Open Scheduler →</button></div>${scheduleRows().slice(0,5).map(x=>`<div class="trigger-row"><div class="date-box"><b>${D(x.d).toLocaleDateString('en-IN',{day:'2-digit',timeZone:'UTC'})}</b><span>${D(x.d).toLocaleDateString('en-IN',{month:'short',timeZone:'UTC'})}</span></div><div class="trigger-copy"><b>${esc(x.c.name)}</b><span>${triggerLabel(x.t)} · ${x.c.channels.join(' + ')}</span></div><div class="trigger-count"><strong>${x.s.length}</strong><span>eligible</span></div><span class="badge ${x.d===DB.TODAY?'a':'b'}">${x.d===DB.TODAY?'Due today':'Scheduled'}</span></div>`).join('')||`<div class="empty-state">No upcoming trigger executions.</div>`}</section>
+    <section class="card panel focus-card"><div class="dash-section-head"><div><h3>Today's focus</h3><p>What needs attention now</p></div><span class="focus-icon">✦</span></div><div class="focus-big"><strong>${todayEligible}</strong><span>subscriptions eligible today</span></div><div class="focus-item"><span class="focus-check">✓</span><div><b>${todayRows.length} trigger group${todayRows.length===1?'':'s'}</b><small>ready in Scheduler</small></div></div><div class="focus-item"><span class="focus-check">↗</span><div><b>${DB.templates.length} active templates</b><small>WhatsApp + Email mapping available</small></div></div><button class="focus-cta" onclick="nav('scheduler')">Review today's execution →</button></section>
+  </div>
+
+  <div class="dash-grid-bottom"><section class="card panel activity-card"><div class="dash-section-head"><div><h3>Recent campaign activity</h3><p>Latest execution records</p></div><button class="btn soft small" onclick="nav('history')">View history →</button></div><div class="activity-list">${recent.map(x=>`<div class="activity-row"><div class="activity-icon ${x.ch==='WhatsApp'?'wa-bg':'mail-bg'}">${x.ch==='WhatsApp'?'◉':'✉'}</div><div class="activity-main"><b>${esc(x.c)}</b><span>${x.ch} · ${x.n} recipients · ${esc(x.d)}</span></div><div class="activity-status"><b>${x.delivered}/${x.n}</b><span>delivered</span></div><span class="badge ${x.execStatus==='Stopped'?'gray':'g'}">${x.execStatus}</span></div>`).join('')}</div></section><section class="card panel audience-card"><div class="dash-section-head"><div><h3>Audience snapshot</h3><p>Source: Subscription Master</p></div><button class="more">•••</button></div><div class="audience-stat"><strong>${DB.subs.length}</strong><span>Total subscriptions</span></div>${[['Spectrum','Spectrum'],['ExpressGST','ExpressGST'],['ZenTDS','ZenTDS'],['PDF Signer','PDF Signer']].map(([n,p])=>{let c=DB.subs.filter(s=>s.product===p).length;return `<div class="audience-line"><span>${n}</span><div><i style="width:${Math.round(c/Math.max(1,DB.subs.length)*100)}%"></i></div><b>${c}</b></div>`}).join('')}<button class="audience-cta" onclick="nav('subscriptions')">Open Subscription Master</button></section></div>`;
 }
 function Templates(){
   const type=DB.templateType||"WhatsApp",list=DB.templates.filter(x=>x.type===type);
