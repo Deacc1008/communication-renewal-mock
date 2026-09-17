@@ -1,1 +1,37 @@
-window.DB={today:"2026-09-17",subs:[["Rajesh Sharma","Spectrum","2026-09-24",1,1,0],["Amit Verma","PDF Signer","2026-09-20",1,1,0],["Neha Gupta","ExpressGST","2026-09-20",0,1,0],["Sanjay Jain","ZenTDS","2026-10-02",1,1,0],["Priya Mehta","Spectrum","2026-09-18",1,1,0],["Vikas Agarwal","Spectrum","2026-09-17",1,1,1],["Kavita Singh","PDF Signer","2026-09-24",1,0,0],["Manish Bansal","ExpressGST","2026-10-02",1,1,0],["Anjali Kapoor","ZenTDS","2026-09-20",1,1,0],["Rohit Sethi","Spectrum","2026-09-24",1,1,0]],templates:[["renewal_7_days","WhatsApp","Spectrum"],["gst_renewal_3_days","WhatsApp","ExpressGST"],["spectrum_renewal","Email","Spectrum"],["pdfsigner_renewal","Email","PDF Signer"]],campaigns:[{name:"September Renewal Journey",products:["Spectrum","ExpressGST","ZenTDS","PDF Signer"],triggers:[15,7,3,1],channels:["WhatsApp","Email"],time:"10:00"}],history:[["2026-09-16 10:00","Demo Customer","September Renewal Journey","WhatsApp","Delivered"]]};
+window.DB = {
+  today: "2026-09-17",
+  subs: [
+    ["Rajesh Sharma","Spectrum","2026-09-24",1,1,0],
+    ["Amit Verma","PDF Signer","2026-09-20",1,1,0],
+    ["Neha Gupta","ExpressGST","2026-09-20",0,1,0],
+    ["Sanjay Jain","ZenTDS","2026-10-02",1,1,0],
+    ["Priya Mehta","Spectrum","2026-09-18",1,1,0],
+    ["Vikas Agarwal","Spectrum","2026-09-17",1,1,1],
+    ["Kavita Singh","PDF Signer","2026-09-24",1,0,0],
+    ["Manish Bansal","ExpressGST","2026-10-02",1,1,0],
+    ["Anjali Kapoor","ZenTDS","2026-09-20",1,1,0],
+    ["Rohit Sethi","Spectrum","2026-09-24",1,1,0],
+    ["Arjun Mehta","PDF Signer","2026-09-18",1,1,0],
+    ["Pooja Sharma","ExpressGST","2026-09-24",1,1,0],
+    ["Nitin Shah","ZenTDS","2026-09-20",1,0,0],
+    ["Meera Kapoor","Spectrum","2026-10-02",1,1,0],
+    ["Karan Malhotra","PDF Signer","2026-09-24",1,1,0],
+    ["Isha Arora","ExpressGST","2026-09-18",1,1,0],
+    ["Rahul Bansal","ZenTDS","2026-09-24",1,1,0],
+    ["Simran Kaur","Spectrum","2026-09-20",1,1,0],
+    ["Dev Khanna","PDF Signer","2026-10-02",1,1,0],
+    ["Kavya Rao","ExpressGST","2026-09-17",1,1,0]
+  ],
+  templates: [
+    ["renewal_7_days","WhatsApp","Spectrum"],
+    ["gst_renewal_3_days","WhatsApp","ExpressGST"],
+    ["spectrum_renewal","Email","Spectrum"],
+    ["pdfsigner_renewal","Email","PDF Signer"]
+  ],
+  campaigns: [
+    {name:"September Renewal Journey",products:["Spectrum","ExpressGST","ZenTDS","PDF Signer"],triggers:[15,7,3,1],channels:["WhatsApp","Email"],time:"10:00"}
+  ],
+  history: [
+    ["2026-09-16 10:00","Demo Customer","September Renewal Journey","WhatsApp","Delivered"]
+  ]
+};

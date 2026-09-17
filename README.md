@@ -1,4 +1,25 @@
-# KDK Communication & Renewal Manager
+# KDK Communication & Renewal Manager — Response 1 Corrected
+
 Static GitHub Pages prototype.
 
-Upload the complete folder contents so index.html, assets/, and data/ are at repository root. Configure Pages: main branch + /(root).
+## Required structure
+- index.html
+- assets/css/style.css
+- assets/js/app.js
+- data/dummy-data.js
+- .nojekyll
+- README.md
+
+## Features
+- Dashboard → Create Campaign
+- Templates → WhatsApp / Email Templates
+- Templates → New Template
+- Campaign Manager → Create Campaign
+- Schedule → Run Scheduler
+- History → Export to CSV
+- Dummy Subscription Master data
+- Multiple renewal triggers relative to each Plan End Date
+- Renewed subscriptions excluded from later reminders
+- No post-expiry reminders
+
+This is a frontend demo. Do not add real customer PII or API credentials.
