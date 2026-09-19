@@ -125,23 +125,14 @@ function waCurl(t){
  const cat=t.category||"UTILITY";
  return `curl --location 'https://api.rampwin.com/api/messages/send?dontShowInChatList=false' \\\n  --header 'X-API-Key: xxxxxxxxxx' \\\n  --header 'Content-Type: application/json' \\\n  --data '{"channel_id":"${channel}","phone_number":"91xxxxxxxxxx","hide_from_chat":false,"template":{"name":"${name}","language":{"policy":"deterministic","code":"${lang}"},"category":"${cat}"}}'`;
 }
-function maskApiKey(k){
-  if(!k)return "Not provided";
-  const v=String(k).trim();
-  if(v.length<=6)return "••••••";
-  return "••••••"+v.slice(-4);
-}
-function waCurl(t){
- const channel=t.channelId||"694332facf4bde9d4ba8616e5";
- const name=t.templateKey||t.name||"renewal_7_days";
- const lang=t.languageCode||"en";
- const cat=t.category||"UTILITY";
- const api=t.apiKey||"xxxxxxxxxx";
- return `curl --location 'https://api.rampwin.com/api/messages/send?dontShowInChatList=false' \\\n  --header 'X-API-Key: ${api}' \\\n  --header 'Content-Type: application/json' \\\n  --data '{"channel_id":"${channel}","phone_number":"91xxxxxxxxxx","hide_from_chat":false,"template":{"name":"${name}","language":{"policy":"deterministic","code":"${lang}"},"category":"${cat}"}}'`;
+function copyTemplateCurl(){
+ const t=DB.templates.find(x=>Number(x.id)===Number(DB.template)); if(!t)return;
+ const value=waCurl(t);
+ if(navigator.clipboard){navigator.clipboard.writeText(value).then(()=>toast("WhatsApp cURL copied to clipboard."));}else{toast("cURL is ready in the developer section below.");}
 }
 function templateMeta(t){
  return t.type==="WhatsApp"
- ? `<div class="meta-grid"><div><span>Approval Status</span><b><span class="badge g">Approved</span></b></div><div><span>Sender ID</span><b>${esc(t.senderId||"KDK WhatsApp")}</b></div><div><span>Channel ID</span><b class="mono">${esc(t.channelId||"Not configured")}</b></div><div><span>API Key</span><b class="mono">${esc(maskApiKey(t.apiKey))}</b></div><div><span>Template Key</span><b class="mono">${esc(t.templateKey||t.name)}</b></div><div><span>Category</span><b><span class="badge a">${esc(t.category||"UTILITY")}</span></b></div><div><span>Language</span><b>${esc(t.languageCode||"en")}</b></div><div><span>Provider</span><b>Rampwin → Meta</b></div></div>`
+ ? `<div class="meta-grid"><div><span>Approval Status</span><b><span class="badge g">Approved</span></b></div><div><span>Sender ID</span><b>${esc(t.senderId||"KDK WhatsApp")}</b></div><div><span>Channel ID</span><b class="mono">${esc(t.channelId||"694332facf4bde9d4ba8616e5")}</b></div><div><span>Template Key</span><b class="mono">${esc(t.templateKey||t.name)}</b></div><div><span>Category</span><b><span class="badge a">${esc(t.category||"UTILITY")}</span></b></div><div><span>Language</span><b>${esc(t.languageCode||"en")}</b></div><div><span>Provider</span><b>Rampwin → Meta</b></div></div>`
  : `<div class="meta-grid"><div><span>Sender ID</span><b>${esc(t.senderId||"KDK Support")}</b></div><div><span>Mail Agent</span><b>${esc(t.mailAgent||"KDK Transactional")}</b></div><div><span>Template Key</span><b class="mono">${esc(t.templateKey||"Generated on provider")}</b></div><div><span>Template Alias</span><b class="mono">${esc(t.templateAlias||t.name)}</b></div><div><span>Category</span><b><span class="badge b">Transactional</span></b></div><div><span>Provider</span><b>ZeptoMail</b></div></div>`;
 }
 function Templates(){
@@ -149,16 +140,18 @@ function Templates(){
   let t=DB.templates.find(x=>x.id===DB.template&&x.type===type)||list[0]; if(t)DB.template=t.id;
   if(!t)return `<div class="crumb">KDK Licensing Application / Communication / Templates</div><div class="head"><div><h1>Template Master</h1><p>No provider templates found.</p></div><button class="btn primary" onclick="openTemplate()">＋ New Template</button></div>`;
   const preview=type==="WhatsApp"?`<div class="phone"><div class="phonehead">${esc(t.senderId||"KDK WhatsApp")}</div><div class="bubble">${esc(t.text||"").replace(/{{1}}/g,"Aarav").replace(/{{2}}/g,t.product).replace(/{{3}}/g,"23 Sep 2026").replace(/{{4}}/g,"7")}</div></div>`:`<div class="email-preview"><div class="mail-head"><b>${esc(t.subject||"Renewal reminder")}</b><span>From: ${esc(t.senderId||"KDK Support")}</span><span>To: customer@example.com</span></div><div class="mail-body">${esc(t.text||"").replace(/{{1}}/g,"Aarav").replace(/{{2}}/g,t.product).replace(/{{3}}/g,"25 Sep 2026").replace(/{{4}}/g,"7")}</div></div>`;
-  return `<div class="crumb">KDK Licensing Application / Communication / Templates</div><div class="head"><div><h1>Template Master</h1><p>Approved provider templates available for campaign mapping.</p></div><button class="btn primary" onclick="openTemplate()">＋ New Template</button></div>
+  return `<div class="crumb">KDK Licensing Application / Communication / Templates</div><div class="head"><div><h1>Template Master</h1><p>Provider-ready communication templates with developer/API metadata.</p></div><button class="btn primary" onclick="openTemplate()">＋ New Template</button></div>
   <div class="tabs"><button class="${type==="WhatsApp"?"on":""}" onclick="setTemplateType('WhatsApp')">WhatsApp Templates</button><button class="${type==="Email"?"on":""}" onclick="setTemplateType('Email')">Email Templates</button></div>
-  <div class="layout"><section class="card list"><input class="search" placeholder="Search templates..." oninput="filter(this.value)"><div id="items">${list.map(x=>`<div class="item ${x.id===t.id?"sel":""}" onclick="selectTemplate(${x.id})"><b>${esc(x.name)}</b><small>${esc(x.product)} · <span class="badge g">${type==="WhatsApp"?"Approved":"Active"}</span></small></div>`).join("")}</div></section>
-  <section class="card editor"><div class="title"><div><h3>${esc(t.name)}</h3><span class="muted">${esc(t.product)} · <span class="status-dot"></span> ${type==="WhatsApp"?"Approved":"Active"}</span></div></div>
+  <div class="layout"><section class="card list"><input class="search" placeholder="Search templates..." oninput="filter(this.value)"><div id="items">${list.map(x=>`<div class="item ${x.id===t.id?"sel":""}" onclick="selectTemplate(${x.id})"><b>${esc(x.name)}</b><small>${esc(x.product)} · <span class="badge g">Approved</span></small></div>`).join("")}</div></section>
+  <section class="card editor"><div class="title"><div><h3>${esc(t.name)}</h3><span class="muted">${esc(t.product)} · <span class="status-dot"></span> Approved</span></div>${type==="WhatsApp"?`<button class="btn small" onclick="copyTemplateCurl()">Copy cURL</button>`:""}</div>
   ${templateMeta(t)}
-  <div class="field"><label>Template Name</label><input value="${esc(t.name)}" readonly></div>${type==="Email"?`<div class="field"><label>Email Subject</label><input value="${esc(t.subject||"")}" readonly></div>`:""}<div class="field"><label>Content</label><textarea style="width:100%;min-height:125px" readonly>${esc(t.text||"")}</textarea></div>
-  <div class="callout"><b>Provider:</b> ${type==="WhatsApp"?"Rampwin API → Meta approved WhatsApp template":"ZeptoMail → Transactional email template"}<br><span class="muted">Provider cURL is used only during template addition/import and is not displayed in the Template Master.</span></div></section>
+  <div class="field"><label>Template Name</label><input value="${esc(t.name)}"></div>${type==="Email"?`<div class="field"><label>Email Subject</label><input value="${esc(t.subject||"")}"></div>`:""}<div class="field"><label>Content</label><textarea style="width:100%;min-height:125px">${esc(t.text||"")}</textarea></div>
+  ${type==="WhatsApp"?`<div class="developer-card"><div class="dev-head"><div><b>Developer Send cURL</b><span>${t.providerCurl?"Original provider cURL":"Generated from Channel ID + Template Key"}</span></div><button class="btn small" onclick="copyTemplateCurl()">Copy</button></div><pre>${esc(waCurl(t))}</pre><div class="help">API key and recipient number are masked in this prototype. Rampwin's documented send-template flow uses the channel ID and approved template details in the request. <a href="https://rampwin-api.readme.io/reference/sending-template" target="_blank" rel="noreferrer">View Rampwin API reference</a></div></div>`:`<div class="developer-card"><div class="dev-head"><div><b>ZeptoMail Provider cURL</b><span>${t.providerCurl?"Original provider cURL stored with this template":"API mapping preview"}</span></div><button class="btn small" onclick="copyStoredCurl()">Copy</button></div><pre>${esc(t.providerCurl||`POST https://api.zeptomail.com/v1.1/email/template\nAuthorization: Zoho-enczapikey xxxxxxxxxx\nContent-Type: application/json\n\n{"from":{"address":"${t.senderId||"support@kdksoftware.com"}"},"template_key":"${t.templateKey||"TEMPLATE_KEY"}","to":[{"email_address":{"address":"customer@example.com"}}]}`)}</pre><div class="help">ZeptoMail supports sending a pre-created template using either template_key or template_alias. <a href="https://www.zoho.com/zeptomail/help/api/email-templates.html" target="_blank" rel="noreferrer">View ZeptoMail API reference</a></div></div>`}
+  <div class="developer-note"><span>⌘</span><div><b>Original Provider cURL</b><small>The cURL stored with this template is the source used to add/map this provider template.</small></div></div>${t.providerCurl?`<div class="developer-card stored-curl"><div class="dev-head"><div><b>${type==="WhatsApp"?"Rampwin":"ZeptoMail"} Provider cURL</b><span>Stored from provider configuration</span></div><button class="btn small" onclick="copyStoredCurl()">Copy</button></div><pre id="storedProviderCurl">${esc(t.providerCurl)}</pre></div>`:""}
+  <div class="callout"><b>Provider:</b> ${type==="WhatsApp"?"Rampwin API → Meta approved WhatsApp template":"ZeptoMail → Transactional email template"}<br><span class="muted">Provider callbacks and delivery are simulated in this prototype.</span></div></section>
   <aside class="card preview"><div class="title"><h3>Live Preview</h3><span class="provider-pill">${type}</span></div>${preview}</aside></div>`;
 }
-function normaliseSubs(){DB.subs.forEach((x,i)=>{if(!x.orgType)x.orgType=["DIY","DIFM","Both"][i%3];if(!x.mobile)x.mobile="+91 98"+String(10000000+i).slice(-8);});}
+function copyStoredCurl(){const t=DB.templates.find(x=>Number(x.id)===Number(DB.template));if(!t?.providerCurl){toast("No provider cURL stored.");return;}if(navigator.clipboard){navigator.clipboard.writeText(t.providerCurl).then(()=>toast("Provider cURL copied to clipboard."));}else{toast("Copy is unavailable in this browser.");}}
 function normaliseSubs(){DB.subs.forEach((x,i)=>{if(!x.orgType)x.orgType=["DIY","DIFM","Both"][i%3];if(!x.mobile)x.mobile="+91 98"+String(10000000+i).slice(-8);});}
 function SubscriptionMaster(){normaliseSubs();const q=(DB.subQ||"").toLowerCase();const rows=DB.subs.filter(s=>[s.name,s.product,s.plan,s.email,s.orgType,s.status].join(" ").toLowerCase().includes(q));return `<div class="crumb">KDK Licensing Application / Master Data (Mock)</div><div class="head"><div><div class="eyebrow">DEMO ONLY · NOT CUSTOMER MASTER</div><h1>Master Data (Mock)</h1><p>Dummy subscription data used only to demonstrate campaign eligibility and renewal flows.</p></div><div class="inline-actions"><button class="btn" onclick="openAddSub()">＋ Add Dummy Record</button><button class="btn primary" onclick="nav('campaigns')">Create Campaign</button></div></div><section class="card panel"><div class="input-row"><div class="field"><label>Search</label><input class="search" value="${esc(DB.subQ||"")}" placeholder="Search client, product, plan, email..." oninput="DB.subQ=this.value;render()"></div><div class="field"><label>Demo data</label><div class="help" style="padding-top:10px">Add fake subscriptions, mark renewals, and demonstrate eligibility changes without using real customer data.</div></div></div><div style="overflow:auto"><table class="table"><tr><th>Customer</th><th>Product / Plan</th><th>Organisation</th><th>Plan End Date</th><th>WhatsApp</th><th>Email</th><th>Status</th><th>Action</th></tr>${rows.map(s=>`<tr><td><b>${esc(s.name)}</b><div class="muted">${esc(s.email)}</div></td><td>${esc(s.product)}<div class="muted">${esc(s.plan)}</div></td><td><span class="badge b">${esc(s.orgType)}</span></td><td>${fmt(s.end)}</td><td>${s.waOpt?"<span class='badge g'>Opted-in</span>":"<span class='badge gray'>No</span>"}</td><td>${s.emailOpt?"<span class='badge g'>Opted-in</span>":"<span class='badge gray'>No</span>"}</td><td><span class="badge ${s.status==="Active"?"g":s.status==="Renewed"?"b":"gray"}">${esc(s.status)}</span></td><td>${s.status==="Active"&&!s.renewed?`<button class="btn small" onclick="renew(${s.id})">Mark Renewed</button>`:`<span class="muted">No action</span>`}</td></tr>`).join("")}</table></div><div class="help">Demo-only placeholder data. This is demo-only audience source data, not a separate Customer/Contacts Master.</div></section>`;}
 function openAddSub(){DB.modal={addSub:1};render();}
@@ -242,105 +235,131 @@ function saveCampaign(){
   DB.modal=null;DB.view="campaigns";toast("Campaign saved and scheduled.");
 }
 function clone(id){let c=DB.campaigns.find(x=>x.id===id);openCamp({...c,id:0,name:c.name+" — Clone",startDate:DB.TODAY});}
-function openTemplate(){DB.modal={template:1};DB.newTemplateType="WhatsApp";DB.newTemplateMode="curl";render();setTimeout(()=>templateFormType("WhatsApp"),0);}
+function openTemplate(){DB.modal={template:1};DB.newTemplateType="WhatsApp";render();setTimeout(()=>templateFormType("WhatsApp"),0);}
 function templateModal(){
- return `<div class="modalbg"><div class="modal template-modal"><div class="head"><div><div class="eyebrow">Template Master</div><h2>Add New Template</h2><p>Add a provider-approved template manually or import it directly from the provider cURL. cURL import auto-fills the integration metadata.</p></div><button class="btn" onclick="DB.modal=null;render()">×</button></div>
+ return `<div class="modalbg"><div class="modal template-modal"><div class="head"><div><div class="eyebrow">Template Master</div><h2>Create New Template</h2><p>Configure provider metadata first, then define the message content. The form changes with the selected channel.</p></div><button class="btn" onclick="DB.modal=null;render()">×</button></div>
  <div class="template-channel"><button id="tab-wa" class="template-channel-btn on" onclick="templateFormType('WhatsApp')"><span>◉</span><div><b>WhatsApp</b><small>Rampwin + Meta approved template</small></div></button><button id="tab-em" class="template-channel-btn" onclick="templateFormType('Email')"><span>✉</span><div><b>Email</b><small>ZeptoMail transactional template</small></div></button></div>
- <div class="input-row"><div class="field"><label>Product <span class="required-dot">*</span></label><select id="nproduct">${products().map(p=>`<option>${p}</option>`).join("")}</select></div><div class="field"><label>Add Method</label><div class="template-method"><button id="mode-manual" class="method-btn" onclick="setTemplateMode('manual')">Manual Addition</button><button id="mode-curl" class="method-btn on" onclick="setTemplateMode('curl')">Import using cURL</button></div></div></div>
+ <div class="input-row"><div class="field"><label>Product <span class="required-dot">*</span></label><select id="nproduct">${products().map(p=>`<option>${p}</option>`).join("")}</select></div><div class="field"><label>Template Source</label><div class="approval-field"><span>Provider cURL</span><small>Imported from Rampwin / ZeptoMail</small></div></div></div>
  <div id="templateDynamic"></div>
  <div class="actions"><button class="btn" onclick="DB.modal=null;render()">Cancel</button><button class="btn primary" onclick="saveTemplate()">Save Template</button></div></div></div>`;
 }
 function templateDynamic(type){
- const curlMode=(DB.newTemplateMode||"curl")==="curl";
  return type==="WhatsApp"
  ? `<div class="provider-import-card whatsapp-import">
-      <div class="import-head"><div><b>${curlMode?"Import Approved WhatsApp Template":"Manual Approved WhatsApp Template"}</b><span>${curlMode?"Paste the cURL copied from Rampwin → Manage Templates. Channel ID, API Key, template key, language and category are read automatically.":"Enter the approved provider values manually. Only already-approved WhatsApp templates may be added."}</span></div><span class="approval-pill">✓ APPROVED ONLY</span></div>
-      ${curlMode?`<div class="field"><label>Rampwin Provider cURL <span class="required-dot">*</span></label><textarea id="providerCurl" rows="7" placeholder="Paste the approved WhatsApp send-template cURL here..." oninput="updateProviderCurlState()"></textarea></div><div class="import-actions"><button class="btn small" onclick="parseProviderCurl()">↳ Read cURL & Auto-Fill</button><span id="providerParseStatus" class="parse-status">Waiting for provider cURL</span></div>`:`<div class="manual-note"><b>Manual mode</b><span>Use this only when the provider has already approved the template. The approval status remains locked to Approved.</span></div>`}
-      <div class="help">${curlMode?"Use the Rampwin Copy Template cURL for an existing approved template. This screen does not submit templates for Meta approval.":"Manual addition does not create or submit a WhatsApp template; it only registers an already-approved template for campaign use."}</div>
+      <div class="import-head"><div><b>Import Approved WhatsApp Template</b><span>Paste the cURL copied from Rampwin → Manage Templates. Only approved templates should be added here.</span></div><span class="approval-pill">✓ APPROVED ONLY</span></div>
+      <div class="field"><label>Rampwin Provider cURL <span class="required-dot">*</span></label><textarea id="providerCurl" rows="7" placeholder="Paste the approved WhatsApp template cURL here..." oninput="updateProviderCurlState()"></textarea></div>
+      <div class="import-actions"><button class="btn small" onclick="parseProviderCurl()">↳ Read cURL & Fill Details</button><span id="providerParseStatus" class="parse-status">Waiting for provider cURL</span></div>
+      <div class="help">Rampwin's Copy Template cURL is generated for a template that already exists in the WhatsApp channel. This screen stores that approved template for campaign use; it does not submit a new template to Meta.</div>
     </div>
-    <div class="section-label"><b>WhatsApp Template Details</b><span>${curlMode?"Provider values are populated from the cURL where available.":"Enter the provider-approved values."}</span></div>
-    <div class="input-row"><div class="field"><label>Sender ID</label><input id="nsender" value="KDK WhatsApp" placeholder="e.g. KDK WhatsApp"></div><div class="field"><label>Channel ID <span class="required-dot">*</span></label><input id="nchannel" value="" placeholder="Rampwin channel ID"></div></div>
-    <div class="input-row"><div class="field"><label>API Key <span class="required-dot">*</span></label><input id="napi" type="password" value="" placeholder="Auto-filled from cURL" autocomplete="off"><div class="help">Masked after import. Never expose a real key in the public mock repository.</div></div><div class="field"><label>Template Key <span class="required-dot">*</span></label><input id="nname" placeholder="e.g. sync_start_confirmation"><div class="help">Rampwin / Meta template name.</div></div></div>
-    <div class="input-row"><div class="field"><label>Category <span class="required-dot">*</span></label><select id="ncat"><option>UTILITY</option><option>MARKETING</option><option>AUTHENTICATION</option></select></div><div class="field"><label>Language Code</label><select id="nlang"><option value="en">English (en)</option><option value="en_US">English (US)</option><option value="hi">Hindi (hi)</option></select></div></div>
-    <div class="input-row"><div class="field"><label>Approval Status</label><div class="approval-field"><span>✓ Approved</span><small>Locked — only provider-approved WhatsApp templates can be registered.</small></div></div><div class="field"><label>Provider</label><div class="approval-field"><span>Rampwin → Meta</span><small>Send through the configured Rampwin channel.</small></div></div></div>
-    ${!curlMode?`<label class="approval-check"><input id="napprovedConfirm" type="checkbox"> <span>I confirm this WhatsApp template is already approved by the provider / Meta.</span></label>`:""}
-    <div class="field"><label>Message Body <span class="required-dot">*</span></label><textarea id="ntext" rows="5" placeholder="Paste or enter the approved template body"></textarea><div class="help">Use the same content/variables as the approved provider template.</div></div>`
+    <div class="section-label"><b>WhatsApp Template Details</b><span>Provider values are populated from the cURL where available.</span></div>
+    <div class="input-row"><div class="field"><label>Sender ID</label><input id="nsender" value="KDK WhatsApp" placeholder="e.g. KDK WhatsApp"></div><div class="field"><label>Channel ID <span class="required-dot">*</span></label><input id="nchannel" value="" placeholder="Rampwin channel ID" oninput="updateNewWaCurl()"></div></div>
+    <div class="input-row"><div class="field"><label>Template Key <span class="required-dot">*</span></label><input id="nname" placeholder="e.g. sync_start_confirmation" oninput="updateNewWaCurl()"><div class="help">Rampwin / Meta template name.</div></div><div class="field"><label>Category <span class="required-dot">*</span></label><select id="ncat" onchange="updateNewWaCurl()"><option>UTILITY</option><option>MARKETING</option><option>AUTHENTICATION</option></select></div></div>
+    <div class="input-row"><div class="field"><label>Language Code</label><select id="nlang" onchange="updateNewWaCurl()"><option value="en">English (en)</option><option value="en_US">English (US)</option><option value="hi">Hindi (hi)</option></select></div><div class="field"><label>Approval Status</label><div class="approval-field"><span>✓ Approved</span><small>Only approved templates can be saved.</small></div></div></div>
+    <div class="field"><label>Message Body <span class="required-dot">*</span></label><textarea id="ntext" rows="5" placeholder="Paste or enter the approved template body"></textarea><div class="help">Use the same content/variables as the approved provider template.</div></div>
+    <div class="developer-card new-curl-card"><div class="dev-head"><div><b>Stored Developer Send cURL</b><span>Uses the provider cURL entered above when available</span></div><button class="btn small" onclick="copyNewWaCurl()">Copy</button></div><pre id="newWaCurl"></pre><div class="help">API key and recipient number are masked in this prototype. The saved template is intended for campaign mapping only.</div></div>`
  : `<div class="provider-import-card email-import">
-      <div class="import-head"><div><b>${curlMode?"Import ZeptoMail Template":"Manual Email Template"}</b><span>${curlMode?"Paste the provider cURL and the system will auto-fill sender, template key/alias and other available metadata.":"Enter the email provider values manually."}</span></div><span class="provider-pill">ZEPTO</span></div>
-      ${curlMode?`<div class="field"><label>ZeptoMail Provider cURL <span class="required-dot">*</span></label><textarea id="providerCurl" rows="7" placeholder="Paste the ZeptoMail provider cURL here..." oninput="updateProviderCurlState()"></textarea></div><div class="import-actions"><button class="btn small" onclick="parseProviderCurl()">↳ Read cURL & Auto-Fill</button><span id="providerParseStatus" class="parse-status">Waiting for provider cURL</span></div>`:`<div class="manual-note"><b>Manual mode</b><span>Enter the template metadata supplied by the email team.</span></div>`}
-      <div class="help">${curlMode?"Provider cURL is used only to populate the new template. It is not displayed after the template is saved.":"Manual addition registers the email template details for campaign mapping."}</div>
+      <div class="import-head"><div><b>Import ZeptoMail Template cURL</b><span>Paste the provider cURL supplied/generated by the email team. The system reads the template metadata and stores it as a reusable template.</span></div><span class="provider-pill">ZEPTO</span></div>
+      <div class="field"><label>ZeptoMail Provider cURL <span class="required-dot">*</span></label><textarea id="providerCurl" rows="7" placeholder="Paste the ZeptoMail template cURL here..." oninput="updateProviderCurlState()"></textarea></div>
+      <div class="import-actions"><button class="btn small" onclick="parseProviderCurl()">↳ Read cURL & Fill Details</button><span id="providerParseStatus" class="parse-status">Waiting for provider cURL</span></div>
+      <div class="help">You can use a ZeptoMail template send cURL or template-creation cURL. Template key/alias and sender details are retained for later campaign execution.</div>
     </div>
-    <div class="section-label"><b>ZeptoMail Template Details</b><span>${curlMode?"Provider values are populated from the cURL where available.":"Enter the provider values."}</span></div>
+    <div class="section-label"><b>ZeptoMail Template Details</b><span>Provider values are populated from the cURL where available.</span></div>
     <div class="input-row"><div class="field"><label>Sender ID / From Address <span class="required-dot">*</span></label><input id="nsender" value="support@kdksoftware.com" placeholder="e.g. support@kdksoftware.com"></div><div class="field"><label>Mail Agent</label><input id="nagent" value="KDK Transactional" placeholder="ZeptoMail Mail Agent"></div></div>
     <div class="input-row"><div class="field"><label>Template Key</label><input id="nkey" placeholder="Provider-generated template key"><div class="help">Unique provider identifier. Use either key or alias for sending.</div></div><div class="field"><label>Template Alias</label><input id="nalias" placeholder="e.g. spectrum_renewal_email"></div></div>
     <div class="input-row"><div class="field"><label>Category</label><select id="ncat"><option>Transactional</option></select></div><div class="field"><label>Reply-To</label><input id="nreply" value="support@kdksoftware.com"></div></div>
     <div class="field"><label>Email Template Name <span class="required-dot">*</span></label><input id="nname" placeholder="e.g. spectrum_renewal_email"></div>
     <div class="field"><label>Email Subject <span class="required-dot">*</span></label><input id="nsubject" placeholder="Your subscription renewal reminder"></div>
-    <div class="field"><label>Email Body / HTML <span class="required-dot">*</span></label><textarea id="ntext" rows="6" placeholder="Paste or enter the template content"></textarea></div>`;
+    <div class="field"><label>Email Body / HTML <span class="required-dot">*</span></label><textarea id="ntext" rows="6" placeholder="Paste or enter the template content"></textarea></div>
+    <div class="developer-note"><span>⌘</span><div><b>Provider cURL is retained</b><small>The original provider request is stored with the template so developers can refer back to the exact integration payload.</small></div></div>`;
 }
-function setTemplateMode(mode){DB.newTemplateMode=mode;const holder=document.getElementById("templateDynamic");if(holder)holder.innerHTML=templateDynamic(DB.newTemplateType||"WhatsApp");document.getElementById("mode-manual")?.classList.toggle("on",mode==="manual");document.getElementById("mode-curl")?.classList.toggle("on",mode==="curl");}
 function updateProviderCurlState(){
  const el=document.getElementById("providerCurl"), st=document.getElementById("providerParseStatus");
- if(!el||!st)return; st.textContent=el.value.trim()?"Provider cURL pasted — click Read cURL & Auto-Fill":"Waiting for provider cURL";st.className="parse-status "+(el.value.trim()?"ready":"");
+ if(!el||!st)return; st.textContent=el.value.trim()?"Provider cURL pasted — click Read cURL & Fill Details":"Waiting for provider cURL";
+ st.className="parse-status "+(el.value.trim()?"ready":"");
+ if(DB.newTemplateType==="WhatsApp")updateNewWaCurl();
 }
 function curlPayloadText(raw){
- const m=raw.match(/(?:--data(?:-raw)?|--data-binary|--data)\s+'([\s\S]*?)'\s*(?:\\\s*)?$/m) || raw.match(/(?:--data(?:-raw)?|--data-binary|--data)\s+"([\s\S]*?)"\s*(?:\\\s*)?$/m);return m?m[1]:"";
+ const m=raw.match(/(?:--data(?:-raw)?|--data-binary|--data)\s+'([\s\S]*?)'\s*$/m) || raw.match(/(?:--data(?:-raw)?|--data-binary|--data)\s+"([\s\S]*?)"\s*$/m);
+ return m?m[1]:"";
 }
 function parseProviderCurl(){
- const raw=document.getElementById("providerCurl")?.value.trim(),status=document.getElementById("providerParseStatus");
+ const raw=document.getElementById("providerCurl")?.value.trim();
+ const status=document.getElementById("providerParseStatus");
  if(!raw){if(status){status.textContent="Paste the provider cURL first.";status.className="parse-status error";}return;}
  try{
    if(DB.newTemplateType==="WhatsApp"){
-     if(!/\/api\/messages\/send/i.test(raw))throw new Error("Use the Rampwin WhatsApp send-template cURL generated from an existing approved template.");
-     if(/\/api\/message-templates\/official-templates/i.test(raw))throw new Error("This is a template submission cURL, not an approved-template send cURL.");
+     if(/\/api\/message-templates\/official-templates/i.test(raw)) throw new Error("This is a template submission cURL, not an approved-template send cURL. Use the Copy Template cURL from Rampwin Manage Templates.");
+     if(!/\/api\/messages\/send/i.test(raw)) throw new Error("Use the Rampwin WhatsApp send-template cURL generated from an existing approved template.");
      const ch=(raw.match(/["']channel_id["']\s*:\s*["']([^"']+)["']/i)||[])[1];
      const name=(raw.match(/["']name["']\s*:\s*["']([^"']+)["']/i)||[])[1];
      const lang=(raw.match(/["']code["']\s*:\s*["']([^"']+)["']/i)||[])[1];
      const cat=(raw.match(/["']category["']\s*:\s*["']([^"']+)["']/i)||[])[1];
-     const api=(raw.match(/(?:--header\s+)?["']?(?:X-API-Key|x-api-key)["']?\s*[: ]\s*["']?([^'"\\\s]+)["']?/i)||[])[1];
-     const phone=(raw.match(/["']phone_number["']\s*:\s*["']([^"']+)["']/i)||[])[1];
-     if(!ch||!name)throw new Error("channel_id and template.name could not be read from the Rampwin cURL.");
-     document.getElementById("nchannel").value=ch;document.getElementById("nname").value=name;
-     if(api)document.getElementById("napi").value=api;
-     if(lang)document.getElementById("nlang").value=lang;
-     if(cat)document.getElementById("ncat").value=cat.toUpperCase();
-     if(phone&&document.getElementById("ntext")&&!document.getElementById("ntext").value)document.getElementById("ntext").value="Approved provider template — message body to be entered/copied from Rampwin.";
-     if(status){status.textContent=`Approved template detected · Channel ID, API Key, Template Key, Language and Category auto-filled.`;status.className="parse-status ready";}
+     const api=(raw.match(/(?:X-API-Key|x-api-key):\s*([^'"\s]+)/i)||[])[1];
+     if(!ch||!name){throw new Error("This does not look like a Rampwin WhatsApp template send cURL. channel_id and template.name are required.");}
+     document.getElementById("nchannel").value=ch; document.getElementById("nname").value=name;
+     if(lang&&["en","en_US","hi"].includes(lang))document.getElementById("nlang").value=lang;
+     if(cat&&["UTILITY","MARKETING","AUTHENTICATION"].includes(cat.toUpperCase()))document.getElementById("ncat").value=cat.toUpperCase();
+     if(api&&api.length>0){ /* keep provider key masked; never expose it into UI */ }
+     if(status){status.textContent="Approved Rampwin template details detected.";status.className="parse-status ready";}
+     updateNewWaCurl();
    }else{
-     const body=curlPayloadText(raw);let j=null;try{j=body?JSON.parse(body):null;}catch(e){j=null;}
-     if(!j){
-       const from=(raw.match(/["'](?:address|from)["']\s*[:=]\s*["']([^"']+)["']/i)||[])[1];
-       const key=(raw.match(/["']template[_-]?key["']\s*[:=]\s*["']([^"']+)["']/i)||[])[1];
-       const alias=(raw.match(/["']template[_-]?alias["']\s*[:=]\s*["']([^"']+)["']/i)||[])[1];
-       if(from)document.getElementById("nsender").value=from;if(key)document.getElementById("nkey").value=key;if(alias)document.getElementById("nalias").value=alias;
-       if(!from&&!key&&!alias)throw new Error("Could not read ZeptoMail template metadata from this cURL.");
-     }else{
-       const from=j.from&&j.from.address,key=j.template_key||j.templateKey,alias=j.template_alias||j.templateAlias,name=j.template_name||j.templateName||alias,subject=j.subject,html=j.htmlbody||j.html_body;
-       if(from)document.getElementById("nsender").value=from;if(key)document.getElementById("nkey").value=key;if(alias)document.getElementById("nalias").value=alias;if(name)document.getElementById("nname").value=name;if(subject)document.getElementById("nsubject").value=subject;if(html)document.getElementById("ntext").value=html;
-     }
-     if(status){status.textContent="ZeptoMail template details auto-filled.";status.className="parse-status ready";}
+     const body=curlPayloadText(raw);
+     const j=body?JSON.parse(body):null;
+     if(!j)throw new Error("Could not read the JSON body from this cURL.");
+     const from=j.from&&j.from.address;
+     const key=j.template_key||j.templateKey;
+     const alias=j.template_alias||j.templateAlias;
+     const name=j.template_name||j.templateName||alias;
+     const subject=j.subject;
+     const html=j.htmlbody||j.html_body;
+     if(from)document.getElementById("nsender").value=from;
+     if(key)document.getElementById("nkey").value=key;
+     if(alias)document.getElementById("nalias").value=alias;
+     if(name)document.getElementById("nname").value=name;
+     if(subject)document.getElementById("nsubject").value=subject;
+     if(html)document.getElementById("ntext").value=html;
+     if(status){status.textContent="ZeptoMail template details detected.";status.className="parse-status ready";}
    }
  }catch(e){if(status){status.textContent=e.message||"Unable to parse this provider cURL.";status.className="parse-status error";}}
 }
-function templateFormType(type){DB.newTemplateType=type;const holder=document.getElementById("templateDynamic");if(holder)holder.innerHTML=templateDynamic(type);document.getElementById("tab-wa")?.classList.toggle("on",type==="WhatsApp");document.getElementById("tab-em")?.classList.toggle("on",type==="Email");document.getElementById("mode-manual")?.classList.toggle("on",(DB.newTemplateMode||"curl")==="manual");document.getElementById("mode-curl")?.classList.toggle("on",(DB.newTemplateMode||"curl")==="curl");}
+function newWaCurl(){
+ const raw=document.getElementById("providerCurl")?.value.trim();
+ if(raw)return raw;
+ const channel=document.getElementById("nchannel")?.value.trim()||"CHANNEL_ID";
+ const name=document.getElementById("nname")?.value.trim()||"template_key";
+ const lang=document.getElementById("nlang")?.value||"en";
+ const cat=document.getElementById("ncat")?.value||"UTILITY";
+ return `curl --location 'https://api.rampwin.com/api/messages/send?dontShowInChatList=false' \\
+  --header 'X-API-Key: xxxxxxxxxx' \\
+  --header 'Content-Type: application/json' \\
+  --data '{"channel_id":"${channel}","phone_number":"91xxxxxxxxxx","hide_from_chat":false,"template":{"name":"${name}","language":{"policy":"deterministic","code":"${lang}"},"category":"${cat}"}}'`;
+}
+function updateNewWaCurl(){const el=document.getElementById("newWaCurl");if(el)el.textContent=newWaCurl();}
+function copyNewWaCurl(){const value=newWaCurl();if(navigator.clipboard){navigator.clipboard.writeText(value).then(()=>toast("WhatsApp cURL copied to clipboard."));}else{toast("Copy is unavailable in this browser.");}}
+function templateFormType(type){
+ DB.newTemplateType=type;
+ const holder=document.getElementById("templateDynamic"); if(holder){holder.innerHTML=templateDynamic(type);}
+ if(type==="WhatsApp")setTimeout(updateNewWaCurl,0);
+ document.getElementById("tab-wa")?.classList.toggle("on",type==="WhatsApp");document.getElementById("tab-em")?.classList.toggle("on",type==="Email");
+}
+
 function saveTemplate(){
- const type=DB.newTemplateType||"WhatsApp",mode=DB.newTemplateMode||"curl",nameEl=document.getElementById("nname"),name=nameEl.value.trim(),textEl=document.getElementById("ntext"),text=textEl.value.trim(),providerEl=document.getElementById("providerCurl"),providerCurl=providerEl?.value.trim()||"";
- if(mode==="curl"&&!providerCurl){providerEl?.setCustomValidity("Provider cURL is required. Paste the cURL supplied/generated by the provider.");providerEl?.reportValidity();return;}providerEl?.setCustomValidity("");
- if(!name){nameEl.setCustomValidity(type==="WhatsApp"?"Template Key is required.":"Email Template Name is required.");nameEl.reportValidity();return;}nameEl.setCustomValidity("");
- if(!text){textEl.setCustomValidity("Message Body / Email Body is required.");textEl.reportValidity();return;}textEl.setCustomValidity("");
- const senderEl=document.getElementById("nsender");if(!senderEl.value.trim()){senderEl.setCustomValidity(type==="WhatsApp"?"Sender ID is required.":"Sender ID / From Address is required.");senderEl.reportValidity();return;}senderEl.setCustomValidity("");
+ const type=DB.newTemplateType||"WhatsApp", nameEl=document.getElementById("nname"),name=nameEl.value.trim(),textEl=document.getElementById("ntext"),text=textEl.value.trim();
+ const providerEl=document.getElementById("providerCurl"), providerCurl=providerEl?.value.trim()||"";
+ if(!providerCurl){providerEl?.setCustomValidity("Provider cURL is required. Paste the cURL supplied/generated by the provider.");providerEl?.reportValidity();return;} providerEl?.setCustomValidity("");
+ if(!name){nameEl.setCustomValidity(type==="WhatsApp"?"Template Key is required.":"Email Template Name is required.");nameEl.reportValidity();return;} nameEl.setCustomValidity("");
+ if(!text){textEl.setCustomValidity("Message Body / Email Body is required.");textEl.reportValidity();return;} textEl.setCustomValidity("");
+ const senderEl=document.getElementById("nsender"); if(!senderEl.value.trim()){senderEl.setCustomValidity(type==="WhatsApp"?"Sender ID is required.":"Sender ID / From Address is required.");senderEl.reportValidity();return;} senderEl.setCustomValidity("");
  if(type==="WhatsApp"){
-   const ch=document.getElementById("nchannel"),api=document.getElementById("napi"),cat=document.getElementById("ncat");
+   const ch=document.getElementById("nchannel"), cat=document.getElementById("ncat"), key=name;
    if(!ch.value.trim()){ch.setCustomValidity("Channel ID is required.");ch.reportValidity();return;}ch.setCustomValidity("");
-   if(!api.value.trim()){api.setCustomValidity("API Key is required. Import it from the provider cURL or enter it manually.");api.reportValidity();return;}api.setCustomValidity("");
-   if(mode==="manual"&&!document.getElementById("napprovedConfirm")?.checked){document.getElementById("napprovedConfirm")?.setCustomValidity("Confirm that this WhatsApp template is already provider-approved.");document.getElementById("napprovedConfirm")?.reportValidity();return;}
-   DB.templates.push({id:Date.now(),type,product:document.getElementById("nproduct").value,name,templateKey:name,channelId:ch.value.trim(),apiKey:api.value.trim(),senderId:senderEl.value.trim(),category:cat.value,languageCode:document.getElementById("nlang").value,status:"Approved",approvalStatus:"Approved",providerCurl:mode==="curl"?providerCurl:"",text});
+   DB.templates.push({id:Date.now(),type,product:document.getElementById("nproduct").value,name,templateKey:key,channelId:ch.value.trim(),senderId:senderEl.value.trim(),category:cat.value,languageCode:document.getElementById("nlang").value,status:"Approved",approvalStatus:"Approved",providerCurl,text});
  }else{
    const subjectEl=document.getElementById("nsubject"),aliasEl=document.getElementById("nalias"),keyEl=document.getElementById("nkey");
    if(!subjectEl.value.trim()){subjectEl.setCustomValidity("Email Subject is required.");subjectEl.reportValidity();return;}subjectEl.setCustomValidity("");
-   DB.templates.push({id:Date.now(),type,product:document.getElementById("nproduct").value,name,templateKey:keyEl.value.trim(),templateAlias:aliasEl.value.trim()||name,senderId:senderEl.value.trim(),mailAgent:document.getElementById("nagent").value.trim(),category:"Transactional",replyTo:document.getElementById("nreply").value.trim(),subject:subjectEl.value.trim(),providerCurl:mode==="curl"?providerCurl:"",text});
+   DB.templates.push({id:Date.now(),type,product:document.getElementById("nproduct").value,name,templateKey:keyEl.value.trim(),templateAlias:aliasEl.value.trim()||name,senderId:senderEl.value.trim(),mailAgent:document.getElementById("nagent").value.trim(),category:"Transactional",replyTo:document.getElementById("nreply").value.trim(),subject:subjectEl.value.trim(),providerCurl,text});
  }
- DB.template=DB.templates[DB.templates.length-1].id;DB.templateType=type;DB.modal=null;DB.view="templates";toast(type==="WhatsApp"?"Approved WhatsApp template added.":"Email template added.");
+ DB.template=DB.templates[DB.templates.length-1].id;DB.templateType=type;DB.modal=null;DB.view="templates";toast(type==="WhatsApp"?"Approved WhatsApp template added.":"Email template added with provider cURL.");
 }
 function setTemplateType(t){DB.templateType=t;let x=DB.templates.find(x=>x.type===t);if(x)DB.template=x.id;render();}
 function selectTemplate(id){DB.template=id;render();}
@@ -415,6 +434,6 @@ function render(){
  (DB.toast?`<div class="toast">${esc(DB.toast)}</div>`:"");
 }
 document.addEventListener("click",function(e){if(e.target.classList&&e.target.classList.contains("modalbg")){DB.modal=null;render();}});
-window.render=render;window.nav=nav;window.openAddSub=openAddSub;window.saveDemoSub=saveDemoSub;window.openCamp=openCamp;window.setTemplateType=setTemplateType;window.selectTemplate=selectTemplate;window.filter=filter;window.run=run;window.exportCSV=exportCSV;window.openTemplate=openTemplate;window.saveTemplate=saveTemplate;window.saveCampaign=saveCampaign;window.clone=clone;window.openSettings=openSettings;window.applySettings=applySettings;window.renew=renew;window.toggleProduct=toggleProduct;window.toggleTrigger=toggleTrigger;window.toggleChannel=toggleChannel;window.addCustomTrigger=addCustomTrigger;window.removeCustomTrigger=removeCustomTrigger;window.setCampaignProduct=setCampaignProduct;window.setCampaignOrg=setCampaignOrg;window.stopSchedule=stopSchedule;window.scheduleDetails=scheduleDetails;window.historyDetails=historyDetails;window.exportClientCSV=exportClientCSV;window.setCampaignTemplate=setCampaignTemplate;window.templateFormType=templateFormType;window.parseProviderCurl=parseProviderCurl;window.updateProviderCurlState=updateProviderCurlState;
+window.render=render;window.nav=nav;window.openAddSub=openAddSub;window.saveDemoSub=saveDemoSub;window.openCamp=openCamp;window.setTemplateType=setTemplateType;window.selectTemplate=selectTemplate;window.filter=filter;window.run=run;window.exportCSV=exportCSV;window.openTemplate=openTemplate;window.saveTemplate=saveTemplate;window.saveCampaign=saveCampaign;window.clone=clone;window.openSettings=openSettings;window.applySettings=applySettings;window.renew=renew;window.toggleProduct=toggleProduct;window.toggleTrigger=toggleTrigger;window.toggleChannel=toggleChannel;window.addCustomTrigger=addCustomTrigger;window.removeCustomTrigger=removeCustomTrigger;window.setCampaignProduct=setCampaignProduct;window.setCampaignOrg=setCampaignOrg;window.stopSchedule=stopSchedule;window.scheduleDetails=scheduleDetails;window.historyDetails=historyDetails;window.exportClientCSV=exportClientCSV;window.setCampaignTemplate=setCampaignTemplate;window.templateFormType=templateFormType;window.parseProviderCurl=parseProviderCurl;window.updateProviderCurlState=updateProviderCurlState;window.copyNewWaCurl=copyNewWaCurl;window.copyStoredCurl=copyStoredCurl;window.copyTemplateCurl=copyTemplateCurl;
 render();
 })();
