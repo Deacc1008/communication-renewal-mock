@@ -11,9 +11,12 @@ A static GitHub Pages prototype for the KDK Licensing Communication & Renewal Ma
 - WhatsApp + Email template mapping per trigger
 - Template Master with separate WhatsApp and Email previews
 - Dynamic New Template form for WhatsApp vs Email
-- Provider cURL import for WhatsApp and Email templates
+- New Template flow starts with WhatsApp or Email, then offers Manual Entry or Import via cURL
+- Manual Entry exposes the provider fields required for the selected channel
+- Import via cURL auto-fills provider fields such as channel ID, API key, template name/key, category, language and sender information where available
 - WhatsApp accepts approved-template send cURL only; creation/submission cURL is rejected
-- Imported provider cURL is retained with the template for developer reference
+- Raw provider cURL is used only during template addition and is not displayed in Template Master
+- Template creation includes message content and detected/addable variables
 - Scheduler with execution dates, eligibility, stop schedule and scheduled-details actions
 - Audit Logs / History with client-wise Details and CSV export
 - Required-field validation and working modal close controls
@@ -31,9 +34,9 @@ GitHub Pages can publish static HTML/CSS/JavaScript directly from a repository. 
 ## Template Provider Configuration Update
 - WhatsApp template creation now captures Sender ID, Rampwin Channel ID, Template Key, Category and Language.
 - WhatsApp creation includes an auto-generated developer Send cURL matching the Rampwin send-template request structure.
-- Existing WhatsApp templates expose provider metadata and a Copy cURL action.
-- Email template creation now captures Sender ID / From Address, ZeptoMail Mail Agent, Template Key, Template Alias, Transactional category and Reply-To.
-- Existing Email templates expose provider metadata and a ZeptoMail API mapping preview.
+- Existing WhatsApp templates expose provider metadata without displaying the raw cURL.
+- Email template creation captures Sender ID / From Address, API Key, ZeptoMail Mail Agent, Template Key, Template Alias, Transactional category and Reply-To.
+- Existing Email templates expose provider metadata without displaying the raw cURL.
 - API keys and recipient numbers remain masked in the prototype; no live credentials are stored.
 
 ### Navigation / Mock Data UX Update
