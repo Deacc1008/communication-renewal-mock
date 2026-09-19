@@ -117,15 +117,40 @@ function Dash(){
 
   <div class="dash-grid-bottom"><section class="card panel activity-card"><div class="dash-section-head"><div><h3>Recent campaign activity</h3><p>Latest execution records</p></div><button class="btn soft small" onclick="nav('history')">View history →</button></div><div class="activity-list">${recent.map(x=>`<div class="activity-row"><div class="activity-icon ${x.ch==='WhatsApp'?'wa-bg':'mail-bg'}">${x.ch==='WhatsApp'?'◉':'✉'}</div><div class="activity-main"><b>${esc(x.c)}</b><span>${x.ch} · ${x.n} recipients · ${esc(x.d)}</span></div><div class="activity-status"><b>${x.delivered}/${x.n}</b><span>delivered</span></div><span class="badge ${x.execStatus==='Stopped'?'gray':'g'}">${x.execStatus}</span></div>`).join('')}</div></section><section class="card panel audience-card"><div class="dash-section-head"><div><h3>Audience snapshot</h3><p>Source: Subscription Master</p></div><button class="more">•••</button></div><div class="audience-stat"><strong>${DB.subs.length}</strong><span>Total subscriptions</span></div>${[['Spectrum','Spectrum'],['ExpressGST','ExpressGST'],['ZenTDS','ZenTDS'],['PDF Signer','PDF Signer']].map(([n,p])=>{let c=DB.subs.filter(s=>s.product===p).length;return `<div class="audience-line"><span>${n}</span><div><i style="width:${Math.round(c/Math.max(1,DB.subs.length)*100)}%"></i></div><b>${c}</b></div>`}).join('')}<button class="audience-cta" onclick="nav('subscriptions')">Open Subscription Master</button></section></div>`;
 }
+function waCurl(t){
+ const channel=t.channelId||"694332facf4bde9d4ba8616e5";
+ const name=t.templateKey||t.name||"renewal_7_days";
+ const lang=t.languageCode||"en";
+ const cat=t.category||"UTILITY";
+ return `curl --location 'https://api.rampwin.com/api/messages/send?dontShowInChatList=false' \\\n  --header 'X-API-Key: xxxxxxxxxx' \\\n  --header 'Content-Type: application/json' \\\n  --data '{"channel_id":"${channel}","phone_number":"91xxxxxxxxxx","hide_from_chat":false,"template":{"name":"${name}","language":{"policy":"deterministic","code":"${lang}"},"category":"${cat}"}}'`;
+}
+function copyTemplateCurl(){
+ const t=DB.templates.find(x=>Number(x.id)===Number(DB.template)); if(!t)return;
+ const value=waCurl(t);
+ if(navigator.clipboard){navigator.clipboard.writeText(value).then(()=>toast("WhatsApp cURL copied to clipboard."));}else{toast("cURL is ready in the developer section below.");}
+}
+function templateMeta(t){
+ return t.type==="WhatsApp"
+ ? `<div class="meta-grid"><div><span>Sender ID</span><b>${esc(t.senderId||"KDK WhatsApp")}</b></div><div><span>Channel ID</span><b class="mono">${esc(t.channelId||"694332facf4bde9d4ba8616e5")}</b></div><div><span>Template Key</span><b class="mono">${esc(t.templateKey||t.name)}</b></div><div><span>Category</span><b><span class="badge a">${esc(t.category||"UTILITY")}</span></b></div><div><span>Language</span><b>${esc(t.languageCode||"en")}</b></div><div><span>Provider</span><b>Rampwin → Meta</b></div></div>`
+ : `<div class="meta-grid"><div><span>Sender ID</span><b>${esc(t.senderId||"KDK Support")}</b></div><div><span>Mail Agent</span><b>${esc(t.mailAgent||"KDK Transactional")}</b></div><div><span>Template Key</span><b class="mono">${esc(t.templateKey||"Generated on provider")}</b></div><div><span>Template Alias</span><b class="mono">${esc(t.templateAlias||t.name)}</b></div><div><span>Category</span><b><span class="badge b">Transactional</span></b></div><div><span>Provider</span><b>ZeptoMail</b></div></div>`;
+}
 function Templates(){
   const type=DB.templateType||"WhatsApp",list=DB.templates.filter(x=>x.type===type);
   let t=DB.templates.find(x=>x.id===DB.template&&x.type===type)||list[0]; if(t)DB.template=t.id;
   if(!t)return `<div class="crumb">KDK Licensing Application / Communication / Templates</div><div class="head"><div><h1>Template Master</h1><p>No templates found.</p></div><button class="btn primary" onclick="openTemplate()">＋ New Template</button></div>`;
-  const preview=type==="WhatsApp"?`<div class="phone"><div class="phonehead">KDK Support · WhatsApp</div><div class="bubble">${esc(t.text||"").replace(/{{1}}/g,"Aarav").replace(/{{2}}/g,t.product).replace(/{{3}}/g,"23 Sep 2026").replace(/{{4}}/g,"7")}</div></div>`:`<div class="email-preview"><div class="mail-head"><b>${esc(t.subject||"Renewal reminder")}</b><span>To: customer@example.com</span></div><div class="mail-body">${esc(t.text||"").replace(/{{1}}/g,"Aarav").replace(/{{2}}/g,t.product).replace(/{{3}}/g,"25 Sep 2026").replace(/{{4}}/g,"7")}</div></div>`;
-  return `<div class="crumb">KDK Licensing Application / Communication / Templates</div><div class="head"><div><h1>Template Master</h1><p>Approved Meta templates and ZeptoMail email templates.</p></div><button class="btn primary" onclick="openTemplate()">＋ New Template</button></div>
+  const preview=type==="WhatsApp"?`<div class="phone"><div class="phonehead">${esc(t.senderId||"KDK WhatsApp")}</div><div class="bubble">${esc(t.text||"").replace(/{{1}}/g,"Aarav").replace(/{{2}}/g,t.product).replace(/{{3}}/g,"23 Sep 2026").replace(/{{4}}/g,"7")}</div></div>`:`<div class="email-preview"><div class="mail-head"><b>${esc(t.subject||"Renewal reminder")}</b><span>From: ${esc(t.senderId||"KDK Support")}</span><span>To: customer@example.com</span></div><div class="mail-body">${esc(t.text||"").replace(/{{1}}/g,"Aarav").replace(/{{2}}/g,t.product).replace(/{{3}}/g,"25 Sep 2026").replace(/{{4}}/g,"7")}</div></div>`;
+  return `<div class="crumb">KDK Licensing Application / Communication / Templates</div><div class="head"><div><h1>Template Master</h1><p>Provider-ready communication templates with developer/API metadata.</p></div><button class="btn primary" onclick="openTemplate()">＋ New Template</button></div>
   <div class="tabs"><button class="${type==="WhatsApp"?"on":""}" onclick="setTemplateType('WhatsApp')">WhatsApp Templates</button><button class="${type==="Email"?"on":""}" onclick="setTemplateType('Email')">Email Templates</button></div>
   <div class="layout"><section class="card list"><input class="search" placeholder="Search templates..." oninput="filter(this.value)"><div id="items">${list.map(x=>`<div class="item ${x.id===t.id?"sel":""}" onclick="selectTemplate(${x.id})"><b>${esc(x.name)}</b><small>${esc(x.product)} · <span class="badge g">Approved</span></small></div>`).join("")}</div></section>
-  <section class="card editor"><div class="title"><h3>${esc(t.name)}</h3><span class="muted">${esc(t.product)} · <span class="status-dot"></span> Approved</span></div><div class="field"><label>Template Name</label><input value="${esc(t.name)}"></div>${type==="Email"?`<div class="field"><label>Email Subject</label><input value="${esc(t.subject||"")}"></div>`:""}<div class="field"><label>Content</label><textarea style="width:100%;min-height:125px">${esc(t.text||"")}</textarea></div><div class="callout"><b>Provider:</b> ${type==="WhatsApp"?"Rampwin API → Meta approved template":"ZeptoMail → Email template"}<br><span class="muted">Provider callbacks are simulated.</span></div></section>
+  <section class="card editor"><div class="title"><div><h3>${esc(t.name)}</h3><span class="muted">${esc(t.product)} · <span class="status-dot"></span> Approved</span></div>${type==="WhatsApp"?`<button class="btn small" onclick="copyTemplateCurl()">Copy cURL</button>`:""}</div>
+  ${templateMeta(t)}
+  <div class="field"><label>Template Name</label><input value="${esc(t.name)}"></div>${type==="Email"?`<div class="field"><label>Email Subject</label><input value="${esc(t.subject||"")}"></div>`:""}<div class="field"><label>Content</label><textarea style="width:100%;min-height:125px">${esc(t.text||"")}</textarea></div>
+  ${type==="WhatsApp"?`<div class="developer-card"><div class="dev-head"><div><b>Developer Send cURL</b><span>Generated from Channel ID + Template Key</span></div><button class="btn small" onclick="copyTemplateCurl()">Copy</button></div><pre>${esc(waCurl(t))}</pre><div class="help">API key and recipient number are masked in this prototype. Rampwin's documented send-template flow uses the channel ID and approved template details in the request. <a href="https://rampwin-api.readme.io/reference/sending-template" target="_blank" rel="noreferrer">View Rampwin API reference</a></div></div>`:`<div class="developer-card"><div class="dev-head"><div><b>ZeptoMail API Mapping</b><span>Template key/alias + sender address are used when sending</span></div></div><pre>POST https://api.zeptomail.com/v1.1/email/template
+Authorization: Zoho-enczapikey xxxxxxxxxx
+Content-Type: application/json
+
+{"from":{"address":"${esc(t.senderId||"support@kdksoftware.com")}"},"template_key":"${esc(t.templateKey||"TEMPLATE_KEY")}","to":[{"email_address":{"address":"customer@example.com"}}]}</pre><div class="help">ZeptoMail supports sending a pre-created template using either template_key or template_alias. <a href="https://www.zoho.com/zeptomail/help/api/email-templates.html" target="_blank" rel="noreferrer">View ZeptoMail API reference</a></div></div>`}
+  <div class="callout"><b>Provider:</b> ${type==="WhatsApp"?"Rampwin API → Meta approved WhatsApp template":"ZeptoMail → Transactional email template"}<br><span class="muted">Provider callbacks and delivery are simulated in this prototype.</span></div></section>
   <aside class="card preview"><div class="title"><h3>Live Preview</h3><span class="provider-pill">${type}</span></div>${preview}</aside></div>`;
 }
 function normaliseSubs(){DB.subs.forEach((x,i)=>{if(!x.orgType)x.orgType=["DIY","DIFM","Both"][i%3];if(!x.mobile)x.mobile="+91 98"+String(10000000+i).slice(-8);});}
@@ -211,36 +236,59 @@ function saveCampaign(){
   DB.modal=null;DB.view="campaigns";toast("Campaign saved and scheduled.");
 }
 function clone(id){let c=DB.campaigns.find(x=>x.id===id);openCamp({...c,id:0,name:c.name+" — Clone",startDate:DB.TODAY});}
-function openTemplate(){DB.modal={template:1};render();setTimeout(()=>templateFormType("WhatsApp"),0);}
+function openTemplate(){DB.modal={template:1};DB.newTemplateType="WhatsApp";render();setTimeout(()=>templateFormType("WhatsApp"),0);}
 function templateModal(){
- return `<div class="modalbg"><div class="modal"><div class="head"><div><h2>Create New Template</h2><p>Fields change based on whether you choose WhatsApp or Email.</p></div><button class="btn" onclick="DB.modal=null;render()">×</button></div>
- <div class="input-row"><div class="field"><label>Template Type</label><select id="ntype" onchange="templateFormType(this.value)"><option>WhatsApp</option><option>Email</option></select></div><div class="field"><label>Product</label><select id="nproduct">${products().map(p=>`<option>${p}</option>`).join("")}</select></div></div>
+ return `<div class="modalbg"><div class="modal template-modal"><div class="head"><div><div class="eyebrow">Template Master</div><h2>Create New Template</h2><p>Configure provider metadata first, then define the message content. The form changes with the selected channel.</p></div><button class="btn" onclick="DB.modal=null;render()">×</button></div>
+ <div class="template-channel"><button id="tab-wa" class="template-channel-btn on" onclick="templateFormType('WhatsApp')"><span>◉</span><div><b>WhatsApp</b><small>Rampwin + Meta approved template</small></div></button><button id="tab-em" class="template-channel-btn" onclick="templateFormType('Email')"><span>✉</span><div><b>Email</b><small>ZeptoMail transactional template</small></div></button></div>
+ <div class="input-row"><div class="field"><label>Product <span class="required-dot">*</span></label><select id="nproduct">${products().map(p=>`<option>${p}</option>`).join("")}</select></div><div class="field"><label>Template Status</label><select id="nstatus"><option>Approved</option><option>Pending Approval</option><option>Draft</option></select></div></div>
  <div id="templateDynamic"></div>
  <div class="actions"><button class="btn" onclick="DB.modal=null;render()">Cancel</button><button class="btn primary" onclick="saveTemplate()">Save Template</button></div></div></div>`;
 }
 function templateDynamic(type){
  return type==="WhatsApp"
- ? `<div class="field"><label>Meta Template Name</label><input id="nname" placeholder="e.g. spectrum_renewal_5_days"></div>
- <div class="input-row"><div class="field"><label>Language</label><select id="nlang"><option>English</option><option>Hindi</option></select></div><div class="field"><label>Category</label><select id="ncat"><option>UTILITY</option><option>MARKETING</option></select></div></div>
- <div class="field"><label>Message Body</label><textarea id="ntext" rows="6">Hello {{1}}, your {{2}} subscription will expire on {{3}}. Renew before the expiry date to continue uninterrupted access.</textarea><div class="help">Meta-approved template variables: {{1}} Customer Name · {{2}} Product/Plan · {{3}} Plan End Date · {{4}} Days Remaining.</div></div>
- <div class="callout"><b>Provider:</b> Rampwin API → Meta approved WhatsApp template</div>`
- : `<div class="field"><label>Email Template Name</label><input id="nname" placeholder="e.g. spectrum_renewal_email"></div>
- <div class="field"><label>Email Subject</label><input id="nsubject" placeholder="Your subscription renewal reminder"></div>
- <div class="input-row"><div class="field"><label>From Name</label><input id="nfrom" value="KDK Support"></div><div class="field"><label>Reply-To</label><input id="nreply" value="support@kdksoftware.com"></div></div>
- <div class="field"><label>Email Body</label><textarea id="ntext" rows="7">Dear {{1}}, your {{2}} subscription is approaching its plan end date of {{3}}. Please renew to continue uninterrupted access.</textarea><div class="help">Email variables: {{1}} Customer Name · {{2}} Product/Plan · {{3}} Plan End Date · {{4}} Days Remaining.</div></div>
- <div class="callout"><b>Provider:</b> ZeptoMail → Email template</div>`;
+ ? `<div class="section-label"><b>WhatsApp API Configuration</b><span>These values are used to build the developer send request.</span></div>
+ <div class="input-row"><div class="field"><label>Sender ID <span class="required-dot">*</span></label><input id="nsender" value="KDK WhatsApp" placeholder="e.g. KDK WhatsApp"></div><div class="field"><label>Channel ID <span class="required-dot">*</span></label><input id="nchannel" value="694332facf4bde9d4ba8616e5" placeholder="Rampwin channel ID" oninput="updateNewWaCurl()"></div></div>
+ <div class="input-row"><div class="field"><label>Template Key <span class="required-dot">*</span></label><input id="nname" placeholder="e.g. spectrum_renewal_5_days" oninput="updateNewWaCurl()"><div class="help">Meta/Rampwin template name. Use lowercase letters, numbers and underscores.</div></div><div class="field"><label>Category <span class="required-dot">*</span></label><select id="ncat" onchange="updateNewWaCurl()"><option>UTILITY</option><option>MARKETING</option><option>AUTHENTICATION</option></select></div></div>
+ <div class="input-row"><div class="field"><label>Language Code</label><select id="nlang" onchange="updateNewWaCurl()"><option value="en">English (en)</option><option value="en_US">English (US)</option><option value="hi">Hindi (hi)</option></select></div><div class="field"><label>API Key</label><input value="xxxxxxxxxx" readonly></div></div>
+ <div class="field"><label>Message Body <span class="required-dot">*</span></label><textarea id="ntext" rows="6">Hello {{1}}, your {{2}} subscription will expire on {{3}}. Renew before the expiry date to continue uninterrupted access.</textarea><div class="help">Variables: {{1}} Customer Name · {{2}} Product/Plan · {{3}} Plan End Date · {{4}} Days Remaining.</div></div>
+ <div class="developer-card new-curl-card"><div class="dev-head"><div><b>Developer Send cURL</b><span>Auto-generated from the fields above</span></div><button class="btn small" onclick="copyNewWaCurl()">Copy</button></div><pre id="newWaCurl"></pre><div class="help">Sender ID is retained as communication metadata; Rampwin routes the send using <b>channel_id</b>. API key and recipient number are masked for this prototype.</div></div>`
+ : `<div class="section-label"><b>ZeptoMail Configuration</b><span>ZeptoMail templates are transactional and use a sender address plus template key/alias.</span></div>
+ <div class="input-row"><div class="field"><label>Sender ID / From Address <span class="required-dot">*</span></label><input id="nsender" value="support@kdksoftware.com" placeholder="e.g. support@kdksoftware.com"></div><div class="field"><label>Mail Agent</label><input id="nagent" value="KDK Transactional" placeholder="ZeptoMail Mail Agent"></div></div>
+ <div class="input-row"><div class="field"><label>Template Key</label><input id="nkey" value="TPL-${Date.now().toString().slice(-8)}" placeholder="Provider-generated template key"><div class="help">ZeptoMail assigns the template key when the template is created.</div></div><div class="field"><label>Template Alias</label><input id="nalias" placeholder="e.g. spectrum_renewal_email"></div></div>
+ <div class="input-row"><div class="field"><label>Category</label><select id="ncat"><option>Transactional</option></select></div><div class="field"><label>Reply-To</label><input id="nreply" value="support@kdksoftware.com"></div></div>
+ <div class="field"><label>Email Template Name <span class="required-dot">*</span></label><input id="nname" placeholder="e.g. spectrum_renewal_email"></div>
+ <div class="field"><label>Email Subject <span class="required-dot">*</span></label><input id="nsubject" placeholder="Your subscription renewal reminder"></div>
+ <div class="field"><label>Email Body <span class="required-dot">*</span></label><textarea id="ntext" rows="7">Dear {{1}}, your {{2}} subscription is approaching its plan end date of {{3}}. Please renew to continue uninterrupted access.</textarea><div class="help">Variables: {{1}} Customer Name · {{2}} Product/Plan · {{3}} Plan End Date · {{4}} Days Remaining.</div></div>
+ <div class="developer-note"><span>⌘</span><div><b>Developer integration</b><small>ZeptoMail uses either <b>template_key</b> or <b>template_alias</b> when sending a pre-created transactional email.</small></div></div>`;
 }
+function newWaCurl(){const channel=document.getElementById("nchannel")?.value.trim()||"CHANNEL_ID";const name=document.getElementById("nname")?.value.trim()||"template_key";const lang=document.getElementById("nlang")?.value||"en";const cat=document.getElementById("ncat")?.value||"UTILITY";return `curl --location 'https://api.rampwin.com/api/messages/send?dontShowInChatList=false' \
+  --header 'X-API-Key: xxxxxxxxxx' \
+  --header 'Content-Type: application/json' \
+  --data '{"channel_id":"${channel}","phone_number":"91xxxxxxxxxx","hide_from_chat":false,"template":{"name":"${name}","language":{"policy":"deterministic","code":"${lang}"},"category":"${cat}"}}'`;}
+function updateNewWaCurl(){const el=document.getElementById("newWaCurl");if(el)el.textContent=newWaCurl();}
+function copyNewWaCurl(){const value=newWaCurl();if(navigator.clipboard){navigator.clipboard.writeText(value).then(()=>toast("WhatsApp cURL copied to clipboard."));}else{toast("Copy is unavailable in this browser.");}}
 function templateFormType(type){
+ DB.newTemplateType=type;
  const holder=document.getElementById("templateDynamic"); if(holder){holder.innerHTML=templateDynamic(type);}
+ if(type==="WhatsApp")setTimeout(updateNewWaCurl,0);
+ document.getElementById("tab-wa")?.classList.toggle("on",type==="WhatsApp");document.getElementById("tab-em")?.classList.toggle("on",type==="Email");
 }
 
 function saveTemplate(){
- const type=document.getElementById("ntype").value,nameEl=document.getElementById("nname"),name=nameEl.value.trim(),textEl=document.getElementById("ntext"),text=textEl.value.trim();
- if(!name){nameEl.setCustomValidity("Template Name is required.");nameEl.reportValidity();return;} nameEl.setCustomValidity("");
+ const type=DB.newTemplateType||"WhatsApp", nameEl=document.getElementById("nname"),name=nameEl.value.trim(),textEl=document.getElementById("ntext"),text=textEl.value.trim();
+ if(!name){nameEl.setCustomValidity(type==="WhatsApp"?"Template Key is required.":"Email Template Name is required.");nameEl.reportValidity();return;} nameEl.setCustomValidity("");
  if(!text){textEl.setCustomValidity("Message Body / Email Body is required.");textEl.reportValidity();return;} textEl.setCustomValidity("");
- if(type==="Email"){const subjectEl=document.getElementById("nsubject");if(!subjectEl.value.trim()){subjectEl.setCustomValidity("Email Subject is required.");subjectEl.reportValidity();return;} subjectEl.setCustomValidity("");}
- DB.templates.push({id:Date.now(),type,product:document.getElementById("nproduct").value,name,subject:document.getElementById("nsubject")?.value||"",text:document.getElementById("ntext").value});
- DB.template=DB.templates[DB.templates.length-1].id;DB.templateType=type;DB.modal=null;DB.view="templates";toast("Template created.");
+ const senderEl=document.getElementById("nsender"); if(!senderEl.value.trim()){senderEl.setCustomValidity(type==="WhatsApp"?"Sender ID is required.":"Sender ID / From Address is required.");senderEl.reportValidity();return;} senderEl.setCustomValidity("");
+ if(type==="WhatsApp"){
+   const ch=document.getElementById("nchannel"), cat=document.getElementById("ncat"), key=name;
+   if(!ch.value.trim()){ch.setCustomValidity("Channel ID is required.");ch.reportValidity();return;}ch.setCustomValidity("");
+   DB.templates.push({id:Date.now(),type,product:document.getElementById("nproduct").value,name,templateKey:key,channelId:ch.value.trim(),senderId:senderEl.value.trim(),category:cat.value,languageCode:document.getElementById("nlang").value,status:document.getElementById("nstatus").value,text});
+ }else{
+   const subjectEl=document.getElementById("nsubject"),aliasEl=document.getElementById("nalias"),keyEl=document.getElementById("nkey");
+   if(!subjectEl.value.trim()){subjectEl.setCustomValidity("Email Subject is required.");subjectEl.reportValidity();return;}subjectEl.setCustomValidity("");
+   DB.templates.push({id:Date.now(),type,product:document.getElementById("nproduct").value,name,templateKey:keyEl.value.trim(),templateAlias:aliasEl.value.trim()||name,senderId:senderEl.value.trim(),mailAgent:document.getElementById("nagent").value.trim(),category:"Transactional",replyTo:document.getElementById("nreply").value.trim(),subject:subjectEl.value.trim(),text});
+ }
+ DB.template=DB.templates[DB.templates.length-1].id;DB.templateType=type;DB.modal=null;DB.view="templates";toast("Template created with provider configuration.");
 }
 function setTemplateType(t){DB.templateType=t;let x=DB.templates.find(x=>x.type===t);if(x)DB.template=x.id;render();}
 function selectTemplate(id){DB.template=id;render();}

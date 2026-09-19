@@ -24,3 +24,11 @@ GitHub Pages can publish static HTML/CSS/JavaScript directly from a repository. 
 - Added richer KPI cards, message activity chart, channel health, renewal trigger timeline, today's focus, recent campaign activity and audience snapshot.
 - Refreshed header navigation, search treatment, cards, spacing, typography, hover states and responsive behavior.
 - Existing campaign, template, scheduler, history and Subscription Master workflows remain connected to the same dummy data.
+
+## Template Provider Configuration Update
+- WhatsApp template creation now captures Sender ID, Rampwin Channel ID, Template Key, Category and Language.
+- WhatsApp creation includes an auto-generated developer Send cURL matching the Rampwin send-template request structure.
+- Existing WhatsApp templates expose provider metadata and a Copy cURL action.
+- Email template creation now captures Sender ID / From Address, ZeptoMail Mail Agent, Template Key, Template Alias, Transactional category and Reply-To.
+- Existing Email templates expose provider metadata and a ZeptoMail API mapping preview.
+- API keys and recipient numbers remain masked in the prototype; no live credentials are stored.
